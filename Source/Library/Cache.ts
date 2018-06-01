@@ -1,0 +1,123 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+'use strict'; /// Strict Syntax //////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import Configuration from '../Common/Configuration'; /// Configuration Settings //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import Utility from '../Common/Utility'; /// Utility Module //////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import * as $path from 'path'; /// Path Module ///////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import Crypto from './Cryptography'; /// Cryptography Module /////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+export default class LibraryCache { /// LibraryCache Class Definition //////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// Public Static Methods ////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * This method checks to see whether or not a cache file exists
+	 * @async
+	 * @name LibraryCache.exists()
+	 * @param {string} $name
+	 * @public
+	 * @returns {Promise<boolean>}
+	 * @static
+	 */
+	public static async exists($name: string): Promise<boolean> {
+		// Define our file name
+		const $fileName = $path.join(Configuration.system.cache.directory, Configuration.system.cache.prefix.concat($name));
+		// Try to stat the file
+		try {
+			// Stat the file
+			await Utility.fsStat($fileName);
+			// We're done, the file exists
+			return true;
+		} catch ($error) {
+			// We're done, the file doesn't exist
+			return false;
+		}
+	}
+
+	/**
+	 * This method reads a cached file from the filesystem
+	 * @async
+	 * @name LibraryCache.read()
+	 * @param {string} $name
+	 * @public
+	 * @returns {Promise<string>}
+	 * @static
+	 */
+	public static async read($name: string): Promise<string> {
+		// Define our file name
+		const $fileName = $path.join(Configuration.system.cache.directory, Configuration.system.cache.prefix.concat($name));
+		// Read the file
+		const $cachedJsonData: string = await Utility.fsReadFile($fileName).toString();
+		// Decode the data
+		const $cachedData: {data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number} = JSON.parse($cachedJsonData.toString());
+		// Check the timestamp
+		if ((Date.now() - $cachedData.meta.timeStamp) >= Configuration.system.cache.ttl) {
+			// Define our error
+			const $error = new Error('Cache Expired');
+			// Set the status into the error
+			$error.name = 'TUXCACHEEXPIRED';
+			// We're done, throw the error
+			throw $error;
+		}
+		// We're done, return the cached data
+		return ($cachedData.meta.encrypted ? Crypto.staticKeyDecrypt($cachedData.data) : $cachedData.data);
+	}
+
+	/**
+	 * This method a cache file to the filesystem
+	 * @async
+	 * @name LibraryCache.write()
+	 * @param {string} $name
+	 * @param {string} $data
+	 * @param {boolean, optional} $encrypt
+	 * @public
+	 * @returns {Promise<{data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number}>}
+	 * @static
+	 */
+	public static async write($name: string, $data: string, $encrypt?: boolean): Promise<{data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number}> {
+		// Check for a provided encrypt flag
+		if ($encrypt === undefined) {
+			// Reset the encrypt flag
+			$encrypt = Configuration.system.cache.encrypt;
+		}
+		// Define our file name
+		const $fileName = $path.join(Configuration.system.cache.directory, Configuration.system.cache.prefix.concat($name));
+		// Define our cache object
+		const $cachedData: {data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number} = {
+			// Set the data into the cache object
+			data: ($encrypt ? Crypto.staticKeyEncrypt($data) : $data),
+			// Define the meta data for the cached file
+			meta: {
+				// Set the encrypted flag
+				encrypted: $encrypt,
+				// Set the creation timestamp
+				timeStamp: Date.now()
+			},
+			// Set the time-to-live
+			ttl: Configuration.system.cache.ttl
+		};
+		// Write the file to the filesystem
+		await Utility.fsWriteFile($fileName, JSON.stringify($cachedData));
+		// We're done, return the written data
+		return $cachedData;
+	}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+} /// End LibraryCache Class Definition //////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

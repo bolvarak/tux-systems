@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"baseUrl": "./Source",
+		"emitDecoratorMetadata": true,
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"lib": [
+			"es2015"
+		],
+		"module": "commonjs",
+		"outDir": "./Build",
+		"removeComments": true,
+		"sourceMap": true,
+		"sourceRoot": "./Source",
+		"strict": true,
+		"target": "es5"
+	},
+	"exclude": [
+		"./node_modules"
+	]
+}
