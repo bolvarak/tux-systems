@@ -12,6 +12,7 @@
 		],
 		"module": "commonjs",
 		"outDir": "./Build",
+		"pretty": true,
 		"removeComments": true,
 		"sourceMap": true,
 		"sourceRoot": "./Source",

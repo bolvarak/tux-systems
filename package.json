@@ -4,7 +4,8 @@
 	"description": "Tux.Systems Core",
 	"main": "Build/index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"tsc": "tsc"
 	},
 	"author": "bolvarak <travis.brown@tux.systems>",
 	"license": "MIT",
