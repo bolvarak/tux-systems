@@ -5,7 +5,10 @@
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
 		"lib": [
-			"es2015"
+			"es2015",
+			"es2016",
+			"es2017",
+			"es2018"
 		],
 		"module": "commonjs",
 		"outDir": "./Build",
@@ -13,7 +16,7 @@
 		"sourceMap": true,
 		"sourceRoot": "./Source",
 		"strict": true,
-		"target": "es5"
+		"target": "es6"
 	},
 	"exclude": [
 		"./node_modules"
