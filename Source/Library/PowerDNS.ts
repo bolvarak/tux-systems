@@ -312,10 +312,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			$clause.where.type = {[DnsRecord.sequelize.Op.eq]: $type.toUpperCase()};
 		}
 		// Add the host to the clause
-		$clause.where.host = (
-			Utility.lodash.isString($host) ?
-				{[DnsRecord.sequelize.Op.eq]: $host.toLowerCase()} : {[DnsRecord.sequelize.Op.eq]: '@'}
-		);
+		$clause.where.host = {[DnsRecord.sequelize.Op.eq]: ((Utility.lodash.isUndefined($host) || Utility.lodash.isEmpty($host)) ? '@' : $host.toLowerCase())};
 		// Query for the record(s)
 		let $records: DnsRecord[] = await DnsRecord.findAll($clause);
 		// Check for records
