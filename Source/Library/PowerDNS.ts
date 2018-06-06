@@ -317,7 +317,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			$host = '@';
 		}
 		// Log the hostname we are looking for
-		this.logger().debug('Looking for Host:]\t' + $host);
+		this.logger().debug('Looking for Host:]\t' + $host + '(' + $type.toUpperCase() + ')');
 		// Add the host to the clause
 		$clause.where.host = {[DnsRecord.sequelize.Op.eq]: $host.toLowerCase()};
 		// Query for the record(s)
