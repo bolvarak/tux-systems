@@ -486,8 +486,6 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 		this.result().log('Start:' + $start);
 		// Parse the hostname
 		await PublicSuffix.parse($parameters.qname);
-		// Log the public suffix data
-		this.logger().debug('PublicSuffix Result:\n' + PublicSuffix.toJson(true));
 		// Check for a domain
 		if (Utility.lodash.isNull(PublicSuffix.domain())) {
 			// Set the unsuccessful flag
