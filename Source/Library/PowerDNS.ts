@@ -298,12 +298,6 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 	 * @returns {Promise<void>}
 	 */
 	protected async lookupDomainRecords($domainId: string, $domainName: string, $host?: string, $type: string = 'ANY'): Promise<void> {
-		// Log the domain ID
-		this.logger().debug('Domain ID\t\t=>\t' + $domainId);
-		// Log the domain name
-		this.logger().debug('Domain Name\t\t=>\t' + $domainName);
-		// Log the record type
-		this.logger().debug('Record Type\t\t=>\t' + $type);
 		// Define our record clause
 		const $clause: IFindOptions<DnsRecord> = {};
 		// Define the WHERE clause
@@ -322,12 +316,8 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			// Reset the host
 			$host = '@';
 		}
-		// Log the hostname we are looking for
-		this.logger().debug('Record Host\t\t=>\t' + $host);
 		// Add the host to the clause
 		$clause.where.host = $host.toLowerCase();
-		// Log the clause
-		this.logger().debug('Record Clause:\n' + JSON.stringify($clause, null, '\t'));
 		// Query for the record(s)
 		let $records: DnsRecord[] = await DnsRecord.findAll($clause);
 		// Check for records
@@ -347,7 +337,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 		// Log the message
 		this.result().log(Utility.util.format('Zone [%s] Has [%d] Records', $domainName, $records.length));
 		// Iterate over the records
-		$records.forEach(async ($record: DnsRecord): Promise<void> => {
+		for (const $record of $records) {
 			// Check the record host
 			if ($record.host === '@') {
 				// Reset the host
@@ -359,13 +349,11 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 				// Reset the host
 				$record.host = ($record.host + '.' + $domainName);
 			}
-			// Log the record that was found
-			this.logger().debug('RecordFound[]\t=>\t' + $record.host + '\t->\t' + $record.type + '\t->\t' + $record.target);
 			// Add the record to the result
 			await this.result().record($record);
 			// Set the record ID into the query
 			this.query().recordId.push($record.id.toString());
-		});
+		}
 	}
 
 	/**
@@ -400,7 +388,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 		// Log the message
 		this.result().log(Utility.util.format('Zone [%s] Has [%d] Records', $domainName, $records.length));
 		// Iterate over the records
-		$records.forEach(async ($record: DnsRecord): Promise<void> => {
+		for (const $record of $records) {
 			// Reset the host
 			$record.host = (
 				($record.host === '@') ?
@@ -410,7 +398,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			await this.result().record($record);
 			// Set the record ID into the query
 			this.query().recordId.push($record.id.toString());
-		});
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -492,8 +480,6 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 	 * @uses ModelPowerDNSResult.record()
 	 */
 	protected async lookup($parameters: {qtype: string, qname: string, remote: string, local: string, 'real-remote': string, 'zone-id': number}): Promise<void> {
-		// Log the parameters
-		this.logger().debug('Query Parameters:\n' + JSON.stringify($parameters, null, '\t'));
 		// Define our start
 		const $start: number = Date.now();
 		// Log the start
@@ -502,7 +488,16 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 		await PublicSuffix.parse($parameters.qname);
 		// Log the public suffix data
 		this.logger().debug('PublicSuffix Result:\n' + PublicSuffix.toJson(true));
-		// Loojup the domain and user
+		// Check for a domain
+		if (Utility.lodash.isNull(PublicSuffix.domain())) {
+			// Set the unsuccessful flag
+			this.result().unsuccessful();
+			// Add the log entry
+			this.result().log('Invalid Domain');
+			// We're done
+			return;
+		}
+		// Lookup the domain and user
 		const $domain: DnsDomain = await this.lookupDomain(PublicSuffix.domain() as string);
 		// Log the message
 		this.result().log(Utility.util.format('Zone [%s] Matched', PublicSuffix.domain()));
@@ -516,7 +511,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			this.result().soa($domain.name, $domain.nameServer[0], $domain.serial, $domain.refresh, $domain.retry, $domain.expire, $domain.ttl);
 		} else {
 			// Lookup the records for the domain
-			await this.lookupDomainRecords($domain.id, $domain.name, (PublicSuffix.host() as string), $parameters.qtype);
+			await this.lookupDomainRecords($domain.id, $domain.name, (Utility.lodash.isNull(PublicSuffix.host()) ? '@' : (PublicSuffix.host() as string)), $parameters.qtype);
 		}
 		// Define our finish
 		const $finish = Date.now();
