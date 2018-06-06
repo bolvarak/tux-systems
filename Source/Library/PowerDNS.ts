@@ -298,18 +298,24 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 	 * @returns {Promise<void>}
 	 */
 	protected async lookupDomainRecords($domainId: string, $domainName: string, $host?: string, $type: string = 'ANY'): Promise<void> {
+		// Log the domain ID
+		this.logger().debug('Domain ID\t\t=>\t' + $domainId);
+		// Log the domain name
+		this.logger().debug('Domain Name\t\t=>\t' + $domainName);
+		// Log the record type
+		this.logger().debug('Record Type\t\t=>\t' + $type);
 		// Define our record clause
 		const $clause: IFindOptions<DnsRecord> = {};
 		// Define the WHERE clause
 		$clause.where = {};
 		// Set the active flag into the WHERE clause
-		$clause.where.isActive = {[DnsRecord.sequelize.Op.eq]: true};
+		$clause.where.isActive = true;
 		// Set the domain ID into the WHERE clause
-		$clause.where.domainId = {[DnsRecord.sequelize.Op.eq]: $domainId};
+		$clause.where.domainId = $domainId;
 		// Check the query type
 		if ($type.toLowerCase() !== 'any') {
 			// Add the record type to the clause
-			$clause.where.type = {[DnsRecord.sequelize.Op.eq]: $type.toUpperCase()};
+			$clause.where.type = $type.toUpperCase();
 		}
 		// Check for a host
 		if (Utility.lodash.isUndefined($host) || Utility.lodash.isEmpty($host)) {
@@ -317,15 +323,17 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			$host = '@';
 		}
 		// Log the hostname we are looking for
-		this.logger().debug('Looking for Host:]\t' + $host + '(' + $type.toUpperCase() + ')');
+		this.logger().debug('Record Host\t\t=>\t' + $host);
 		// Add the host to the clause
-		$clause.where.host = {[DnsRecord.sequelize.Op.eq]: $host.toLowerCase()};
+		$clause.where.host = $host.toLowerCase();
+		// Log the clause
+		this.logger().debug('Record Clause:\n' + JSON.stringify($clause, null, '\t'));
 		// Query for the record(s)
 		let $records: DnsRecord[] = await DnsRecord.findAll($clause);
 		// Check for records
 		if ((!$records || !$records.length) && !Utility.lodash.isUndefined($host) && !Utility.lodash.isEmpty($host)) {
 			// Update the host name
-			$clause.where.host = {[DnsRecord.sequelize.Op.eq]: '*'};
+			$clause.where.host = '*';
 			// Execute the query await
 			$records = await DnsRecord.findAll($clause);
 		}
@@ -336,12 +344,10 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			// We're done
 			return;
 		}
-		// Default the record ID list
-		this.query().recordId = [];
 		// Log the message
 		this.result().log(Utility.util.format('Zone [%s] Has [%d] Records', $domainName, $records.length));
 		// Iterate over the records
-		for (const $record of $records) {
+		$records.forEach(async ($record: DnsRecord): Promise<void> => {
 			// Check the record host
 			if ($record.host === '@') {
 				// Reset the host
@@ -353,11 +359,13 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 				// Reset the host
 				$record.host = ($record.host + '.' + $domainName);
 			}
+			// Log the record that was found
+			this.logger().debug('RecordFound[]\t=>\t' + $record.host + '\t->\t' + $record.type + '\t->\t' + $record.target);
 			// Add the record to the result
 			await this.result().record($record);
 			// Set the record ID into the query
 			this.query().recordId.push($record.id.toString());
-		}
+		});
 	}
 
 	/**
@@ -392,7 +400,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 		// Log the message
 		this.result().log(Utility.util.format('Zone [%s] Has [%d] Records', $domainName, $records.length));
 		// Iterate over the records
-		for (const $record of $records) {
+		$records.forEach(async ($record: DnsRecord): Promise<void> => {
 			// Reset the host
 			$record.host = (
 				($record.host === '@') ?
@@ -402,7 +410,7 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			await this.result().record($record);
 			// Set the record ID into the query
 			this.query().recordId.push($record.id.toString());
-		}
+		});
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -484,12 +492,16 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 	 * @uses ModelPowerDNSResult.record()
 	 */
 	protected async lookup($parameters: {qtype: string, qname: string, remote: string, local: string, 'real-remote': string, 'zone-id': number}): Promise<void> {
+		// Log the parameters
+		this.logger().debug('Query Parameters:\n' + JSON.stringify($parameters, null, '\t'));
 		// Define our start
 		const $start: number = Date.now();
 		// Log the start
 		this.result().log('Start:' + $start);
 		// Parse the hostname
 		await PublicSuffix.parse($parameters.qname);
+		// Log the public suffix data
+		this.logger().debug('PublicSuffix Result:\n' + PublicSuffix.toJson(true));
 		// Loojup the domain and user
 		const $domain: DnsDomain = await this.lookupDomain(PublicSuffix.domain() as string);
 		// Log the message

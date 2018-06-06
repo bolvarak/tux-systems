@@ -132,7 +132,7 @@ export default class DnsQuery extends Model<DnsQuery> {
 		field: 'dns_record_id',
 		type: DataType.ARRAY(DataType.UUID)
 	})
-	public recordId!: string[];
+	public recordId: string[] = [];
 
 	@Column({
 		allowNull: false,

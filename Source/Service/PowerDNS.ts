@@ -119,7 +119,7 @@ export default class ServicePowerDNS extends Socket { /// ServicePowerDNS Class 
 					| {qtype: string, qname: string, remote: string, local: string, 'real-remote': string, 'zone-id': number}
 				)} = JSON.parse($data.toString());
 			// Log the payload
-			this.logger().debug(Utility.util.format('Client [%s] Payload\t%s', $clientId, JSON.stringify($payload)));
+			this.logger().debug(Utility.util.format('Client [%s] Payload\n%s', $clientId, JSON.stringify($payload, null, '\t')));
 			// Instantiate our model
 			const $queryModel: DnsQuery = await DnsQuery.create({
 				clientId: $clientId,

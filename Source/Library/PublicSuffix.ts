@@ -106,21 +106,82 @@ export default class LibraryPublicSuffix { /// LibraryPublicSuffix Class Definit
 	 * @name LibraryPublicSuffix.parse()
 	 * @param {string} $hostname
 	 * @public
-	 * @returns {Promise.<LibraryPublicSuffix>}
+	 * @returns {Promise.<void>}
 	 * @static
+	 * @uses LibraryPublicSuffix.reset()
 	 * @uses LibraryPublicSuffix.source()
 	 * @uses LibraryPublicSuffix.process()
 	 * @uses LibraryPublicSuffix.processPort()
 	 */
-	public static async parse($hostname: string): Promise<LibraryPublicSuffix> {
+	public static async parse($hostname: string): Promise<void> {
+		// Reset the instance
+		this.reset();
 		// Set the source into the instance
 		this.source($hostname);
 		// Parse the TLD
 		await this.process();
 		// Parse the port number
 		await this.processPort();
-		// We're done, return the instance
-		return this;
+	}
+
+	/**
+	 * This method resets the dynamic properties on the instance
+	 * @name LibraryPublicSuffix.reset()
+	 * @public
+	 * @returns {void}
+	 * @static
+	 */
+	public static reset(): void {
+		// Reset the domain name
+		this.mDomain = null;
+		// Reset the host
+		this.mHost = null;
+		// Reset the port
+		this.mPort = 0;
+		// Reset the source
+		this.mSource = '';
+		// Reset the TLD
+		this.mTopLevelDomain = null;
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// Converters ///////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * This method converts the instance to a JSON object
+	 * @name LibraryPublicSuffix.toJson()
+	 * @param {boolean, optional} $pretty [false]
+	 * @public
+	 * @returns {string}
+	 * @static
+	 * @uses LibraryPublicSuffix.toObject()
+	 */
+	public static toJson($pretty: boolean = false): string {
+		// Return our JSON object
+		return ($pretty ? JSON.stringify(this.toObject(), null, '\t') : JSON.stringify(this.toObject()));
+	}
+
+	/**
+	 * This method converts the instance to an object
+	 * @name LibraryPublicSuffix.toObject()
+	 * @public
+	 * @returns {{domain: string | null, host: string | null, port: number, source: string, tld: string | null}}
+	 * @static
+	 * @uses LibraryPublicSuffix.domain()
+	 * @uses LibraryPublicSuffix.host()
+	 * @uses LibraryPublicSuffix.source()
+	 * @uses LibraryPublicSuffix.tld()
+	 */
+	public static toObject(): {domain: string | null, host: string | null, port: number, source: string, tld: string | null} {
+		// Return our marshallable object
+		return {
+			domain: this.domain(),
+			host: this.host(),
+			port: this.port(),
+			source: this.source(),
+			tld: this.tld()
+		};
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
