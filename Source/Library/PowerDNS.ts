@@ -311,11 +311,15 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 			// Add the record type to the clause
 			$clause.where.type = {[DnsRecord.sequelize.Op.eq]: $type.toUpperCase()};
 		}
+		// Check for a host
+		if (Utility.lodash.isUndefined($host) || Utility.lodash.isEmpty($host)) {
+			// Reset the host
+			$host = '@';
+		}
+		// Log the hostname we are looking for
+		this.logger().debug('Looking for Host:]\t' + $host);
 		// Add the host to the clause
-		$clause.where.host = {[DnsRecord.sequelize.Op.eq]: (
-			(Utility.lodash.isUndefined($host) || Utility.lodash.isEmpty($host)) ? '@'
-				: $host.toLowerCase()
-			)};
+		$clause.where.host = {[DnsRecord.sequelize.Op.eq]: $host.toLowerCase()};
 		// Query for the record(s)
 		let $records: DnsRecord[] = await DnsRecord.findAll($clause);
 		// Check for records
