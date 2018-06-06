@@ -307,16 +307,19 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 		// Set the domain ID into the WHERE clause
 		$clause.where.domainId = {[DnsRecord.sequelize.Op.eq]: $domainId};
 		// Check the query type
-		if (($type.toLowerCase() !== 'any')) {
+		if ($type.toLowerCase() !== 'any') {
 			// Add the record type to the clause
 			$clause.where.type = {[DnsRecord.sequelize.Op.eq]: $type.toUpperCase()};
 		}
 		// Add the host to the clause
-		$clause.where.host = {[DnsRecord.sequelize.Op.eq]: ((Utility.lodash.isUndefined($host) || Utility.lodash.isEmpty($host)) ? '@' : $host.toLowerCase())};
+		$clause.where.host = {[DnsRecord.sequelize.Op.eq]: (
+			(Utility.lodash.isUndefined($host) || Utility.lodash.isEmpty($host)) ? '@'
+				: $host.toLowerCase()
+			)};
 		// Query for the record(s)
 		let $records: DnsRecord[] = await DnsRecord.findAll($clause);
 		// Check for records
-		if ((!$records || !$records.length) && !Utility.lodash.isNull($host)) {
+		if ((!$records || !$records.length) && !Utility.lodash.isUndefined($host) && !Utility.lodash.isEmpty($host)) {
 			// Update the host name
 			$clause.where.host = {[DnsRecord.sequelize.Op.eq]: '*'};
 			// Execute the query await
@@ -335,21 +338,17 @@ export default class LibraryPowerDNS { /// LibraryPowerDNS Class Definition ////
 		this.result().log(Utility.util.format('Zone [%s] Has [%d] Records', $domainName, $records.length));
 		// Iterate over the records
 		for (const $record of $records) {
-			// Localize the host
-			let $recordHost: string = $record.host;
 			// Check the record host
-			if ($recordHost === '@') {
+			if ($record.host === '@') {
 				// Reset the host
-				$recordHost = $domainName;
-			} else if ($recordHost === '*') {
+				$record.host = $domainName;
+			} else if ($record.host === '*') {
 				// Reset the host
-				$recordHost = ($host + '.' + $domainName);
+				$record.host = ($host + '.' + $domainName);
 			} else {
 				// Reset the host
-				$recordHost = ($recordHost + '.' + $domainName);
+				$record.host = ($record.host + '.' + $domainName);
 			}
-			// Reset the record host
-			$record.host = $recordHost;
 			// Add the record to the result
 			await this.result().record($record);
 			// Set the record ID into the query
