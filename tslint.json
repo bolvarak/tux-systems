@@ -1,6 +1,7 @@
 {
 	"extends": "tslint:latest",
 	"rules": {
+		"no-console": false,
 		"align": [true, "parameters", "statements"],
 		"arrow-parens": false,
 		"class-name": false,

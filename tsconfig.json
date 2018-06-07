@@ -17,7 +17,7 @@
 		"sourceMap": true,
 		"sourceRoot": "./Source",
 		"strict": true,
-		"target": "es6"
+		"target": "es2018"
 	},
 	"exclude": [
 		"./node_modules"

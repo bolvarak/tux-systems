@@ -63,11 +63,18 @@ export default class LibraryCache { /// LibraryCache Class Definition //////////
 		// Define our file name
 		const $fileName = $path.join(Configuration.system.cache.directory, Configuration.system.cache.prefix.concat($name));
 		// Read the file
-		const $cachedJsonData: string = await Utility.fsReadFile($fileName).toString();
+		const $cachedJsonData: Buffer = (await Utility.fsReadFile($fileName) as Buffer);
 		// Decode the data
-		const $cachedData: {data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number} = JSON.parse($cachedJsonData.toString());
+		const $cachedData: {
+			data: string;
+			meta: {
+				encrypted: boolean;
+				timeStamp: number;
+				ttl: number;
+			};
+		} = JSON.parse($cachedJsonData.toString());
 		// Check the timestamp
-		if ((Date.now() - $cachedData.meta.timeStamp) >= Configuration.system.cache.ttl) {
+		if ((Date.now() - $cachedData.meta.timeStamp) >= $cachedData.meta.ttl) {
 			// Define our error
 			const $error = new Error('Cache Expired');
 			// Set the status into the error
@@ -87,10 +94,10 @@ export default class LibraryCache { /// LibraryCache Class Definition //////////
 	 * @param {string} $data
 	 * @param {boolean, optional} $encrypt
 	 * @public
-	 * @returns {Promise<{data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number}>}
+	 * @returns {Promise<{data: string; meta: {encrypted: boolean; timeStamp: number; ttl: number; }; }>}
 	 * @static
 	 */
-	public static async write($name: string, $data: string, $encrypt?: boolean): Promise<{data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number}> {
+	public static async write($name: string, $data: string, $encrypt?: boolean): Promise<{data: string; meta: {encrypted: boolean; timeStamp: number; ttl: number; }; }> {
 		// Check for a provided encrypt flag
 		if ($encrypt === undefined) {
 			// Reset the encrypt flag
@@ -99,7 +106,14 @@ export default class LibraryCache { /// LibraryCache Class Definition //////////
 		// Define our file name
 		const $fileName = $path.join(Configuration.system.cache.directory, Configuration.system.cache.prefix.concat($name));
 		// Define our cache object
-		const $cachedData: {data: string, meta: {timeStamp: number, encrypted: boolean}, ttl: number} = {
+		const $cachedData: {
+			data: string;
+			meta: {
+				encrypted: boolean;
+				timeStamp: number;
+				ttl: number;
+			};
+		} = {
 			// Set the data into the cache object
 			data: ($encrypt ? Crypto.staticKeyEncrypt($data) : $data),
 			// Define the meta data for the cached file
@@ -107,10 +121,10 @@ export default class LibraryCache { /// LibraryCache Class Definition //////////
 				// Set the encrypted flag
 				encrypted: $encrypt,
 				// Set the creation timestamp
-				timeStamp: Date.now()
-			},
-			// Set the time-to-live
-			ttl: Configuration.system.cache.ttl
+				timeStamp: Date.now(),
+				// Set the time-to-live
+				ttl: Configuration.system.cache.ttl
+			}
 		};
 		// Write the file to the filesystem
 		await Utility.fsWriteFile($fileName, JSON.stringify($cachedData));
